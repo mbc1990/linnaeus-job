@@ -4,6 +4,8 @@ import "net/http"
 import "encoding/json"
 import "io/ioutil"
 import "fmt"
+import "strconv"
+import "log"
 
 type LinnaeusJob struct {
 	ClassifierPort int
@@ -13,25 +15,25 @@ type LinnaeusJob struct {
 
 // Format of linnaeus response
 type Class struct {
-	ClassId       string  // "n00000"
-	HumanReadable string  // "corgi, pembrook welsh"
-	Probability   float64 // 0.76
+	ClassId     string  // "n00000"
+	ClassName   string  // "corgi, pembrook welsh"
+	Probability float64 // 0.76
 }
 
 // Goes through unclassified images and has Linnaeus classify them
 func (lj *LinnaeusJob) ClassifyImages() {
 	fmt.Println("Classifying images...")
-	unclassified := Pg.GetUnclassified()
+	unclassified := lj.Pg.GetUnclassified()
 
+	port := strconv.Itoa(lj.ClassifierPort)
 	for _, fname := range unclassified {
-		url := fmt.Sprintf("http://localhost:%s?filename=%s", lj.ClassifierPort, fname)
+		url := fmt.Sprintf("http://localhost:%s/classify?filename=%s", port, fname)
 		resp, err := http.Get(url)
 		if err != nil {
-			// TODO: probably *don't* want to panic here
-			panic(err)
+			log.Print(err)
 		}
-		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
 		classes := make([]Class, 0)
 		json.Unmarshal(body, &classes)
 
@@ -40,10 +42,11 @@ func (lj *LinnaeusJob) ClassifyImages() {
 	}
 }
 
-func NewLinnaeusJob(conf Configuration) *LinnaeusJob {
+func NewLinnaeusJob(conf *Configuration) *LinnaeusJob {
 	job := new(LinnaeusJob)
-	job.ClassifierPort = conf.ClassifierPort
-	job.pg = NewPostgresClient(job.Conf.PGHost, job.Conf.PGPort,
+	job.Conf = conf
+	job.ClassifierPort = conf.LinnaeusPort
+	job.Pg = NewPostgresClient(job.Conf.PGHost, job.Conf.PGPort,
 		job.Conf.PGUser, job.Conf.PGPassword, job.Conf.PGDbname)
 	return job
 }

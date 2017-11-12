@@ -32,12 +32,16 @@ func (p *PostgresClient) GetDB() *sql.DB {
 // Returns a slice of absolute paths to unclassified images
 func (p *PostgresClient) GetUnclassified() []string {
 
+	ret := []string{"goldens.jpg"}
+	return ret
 }
 
 // Saves classification for image
+/*
 func (p *PostgresClient) SaveClassification(imageId string, class string, probability float64) {
 
 }
+*/
 
 func NewPostgresClient(pgHost string, pgPort int, pgUser string,
 	pgPassword string, pgDbname string) *PostgresClient {

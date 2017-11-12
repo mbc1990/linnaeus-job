@@ -27,6 +27,6 @@ func main() {
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	job = NewLinnaeusJob(&conf)
+	job := NewLinnaeusJob(&conf)
 	job.ClassifyImages()
 }
