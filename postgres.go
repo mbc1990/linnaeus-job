@@ -1,6 +1,7 @@
 package main
 
 import "database/sql"
+import "log"
 import "fmt"
 import _ "github.com/lib/pq"
 
@@ -29,10 +30,37 @@ func (p *PostgresClient) GetDB() *sql.DB {
 	return db
 }
 
-// Returns a slice of absolute paths to unclassified images
-func (p *PostgresClient) GetUnclassified() []string {
+type Image struct {
+	ImageId  int    // ID from postgres
+	Filename string // Filename relative to the configured working directory path
+}
 
-	ret := []string{"goldens.jpg"}
+// Returns a slice of absolute paths to unclassified images
+func (p *PostgresClient) GetUnclassified() []*Image {
+	sqlStatement := `
+    SELECT image_id, filename FROM images WHERE classified IS false`
+	rows, err := p.Db.Query(sqlStatement)
+	defer rows.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	ret := make([]*Image, 0)
+	var (
+		imageId  int
+		filename string
+	)
+	for rows.Next() {
+		if err := rows.Scan(&imageId, &filename); err != nil {
+			log.Fatal(err)
+		}
+		img := &Image{ImageId: imageId, Filename: filename}
+		ret = append(ret, img)
+
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
 	return ret
 }
 

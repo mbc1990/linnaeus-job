@@ -22,12 +22,12 @@ type Class struct {
 
 // Goes through unclassified images and has Linnaeus classify them
 func (lj *LinnaeusJob) ClassifyImages() {
-	fmt.Println("Classifying images...")
 	unclassified := lj.Pg.GetUnclassified()
 
 	port := strconv.Itoa(lj.ClassifierPort)
-	for _, fname := range unclassified {
-		url := fmt.Sprintf("http://localhost:%s/classify?filename=%s", port, fname)
+	for _, img := range unclassified {
+		fmt.Println(*img)
+		url := fmt.Sprintf("http://localhost:%s/classify?filename=%s", port, img.Filename)
 		resp, err := http.Get(url)
 		if err != nil {
 			log.Print(err)
