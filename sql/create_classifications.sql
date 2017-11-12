@@ -1,5 +1,6 @@
 CREATE TABLE classifications(
-  class_id varchar(1024) primary key not null,
+  classification_uuid serial primary key not null,
+  class_id varchar(1024) not null,
   class_name varchar(1024)  not null,
   image_id integer not null,
   probability decimal not null,
