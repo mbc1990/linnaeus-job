@@ -6,12 +6,13 @@ import "os"
 
 // Configuration struct that conf json file is read into
 type Configuration struct {
-	LinnaeusPort int
-	PGHost       string
-	PGPort       int
-	PGUser       string
-	PGPassword   string
-	PGDbname     string
+	LinnaeusPort    int
+	ImageDirAbsPath string
+	PGHost          string
+	PGPort          int
+	PGUser          string
+	PGPassword      string
+	PGDbname        string
 }
 
 func main() {

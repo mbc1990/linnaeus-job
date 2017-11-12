@@ -11,6 +11,7 @@ type LinnaeusJob struct {
 	ClassifierPort int
 	Conf           *Configuration
 	Pg             *PostgresClient
+	ImageDir       string
 }
 
 // Format of linnaeus response
@@ -27,18 +28,25 @@ func (lj *LinnaeusJob) ClassifyImages() {
 	port := strconv.Itoa(lj.ClassifierPort)
 	for _, img := range unclassified {
 		fmt.Println(*img)
-		url := fmt.Sprintf("http://localhost:%s/classify?filename=%s", port, img.Filename)
+		fname := lj.ImageDir + img.Filename
+		url := fmt.Sprintf("http://localhost:%s/classify?filename=%s", port, fname)
 		resp, err := http.Get(url)
 		if err != nil {
 			log.Print(err)
 		}
 		body, err := ioutil.ReadAll(resp.Body)
+
+		// Close immediately rather than defer because we're in a big loop
 		resp.Body.Close()
 		classes := make([]Class, 0)
 		json.Unmarshal(body, &classes)
 
-		// TODO: Do stuff with classes
-		fmt.Println(classes)
+		// Until we're returning probability from classifier, just use top class
+		if len(classes) >= 1 {
+			class := classes[0]
+			lj.Pg.SaveClassification(img.ImageId, class.ClassId,
+				class.ClassName, class.Probability)
+		}
 	}
 }
 
@@ -46,6 +54,7 @@ func NewLinnaeusJob(conf *Configuration) *LinnaeusJob {
 	job := new(LinnaeusJob)
 	job.Conf = conf
 	job.ClassifierPort = conf.LinnaeusPort
+	job.ImageDir = conf.ImageDirAbsPath
 	job.Pg = NewPostgresClient(job.Conf.PGHost, job.Conf.PGPort,
 		job.Conf.PGUser, job.Conf.PGPassword, job.Conf.PGDbname)
 	return job

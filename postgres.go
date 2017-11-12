@@ -38,7 +38,8 @@ type Image struct {
 // Returns a slice of absolute paths to unclassified images
 func (p *PostgresClient) GetUnclassified() []*Image {
 	sqlStatement := `
-    SELECT image_id, filename FROM images WHERE classified IS false`
+	SELECT image_id, filename FROM images WHERE classified IS false`
+
 	rows, err := p.Db.Query(sqlStatement)
 	defer rows.Close()
 	if err != nil {
@@ -65,11 +66,29 @@ func (p *PostgresClient) GetUnclassified() []*Image {
 }
 
 // Saves classification for image
-/*
-func (p *PostgresClient) SaveClassification(imageId string, class string, probability float64) {
+// TODO: This whole thing should be in a transaction
+func (p *PostgresClient) SaveClassification(imageId int, classId string,
+	className string, probability float64) {
 
+	// Write classification to db
+	sqlStatement := `  
+	  INSERT INTO classifications (image_id, class_id, class_name, probability)
+	  VALUES ($1, $2, $3, $4)
+	`
+	_, err := p.Db.Exec(sqlStatement, imageId, classId, className, probability)
+	if err != nil {
+		panic(err)
+	}
+
+	// Update classified status of image
+	sqlStatement = `  
+	UPDATE images SET classified=true WHERE image_id=$1
+	`
+	_, err = p.Db.Exec(sqlStatement, imageId)
+	if err != nil {
+		panic(err)
+	}
 }
-*/
 
 func NewPostgresClient(pgHost string, pgPort int, pgUser string,
 	pgPassword string, pgDbname string) *PostgresClient {
