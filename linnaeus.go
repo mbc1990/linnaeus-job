@@ -16,9 +16,9 @@ type LinnaeusJob struct {
 
 // Format of linnaeus response
 type Class struct {
-	ClassId     string  // "n00000"
-	ClassName   string  // "corgi, pembrook welsh"
-	Probability float64 // 0.76
+	ClassId     string // "n00000"
+	ClassName   string // "corgi, pembrook welsh"
+	Probability string // "0.76"
 }
 
 // Goes through unclassified images and has Linnaeus classify them
@@ -44,8 +44,9 @@ func (lj *LinnaeusJob) ClassifyImages() {
 		// Until we're returning probability from classifier, just use top class
 		if len(classes) >= 1 {
 			class := classes[0]
+			prob, _ := strconv.ParseFloat(class.Probability, 32)
 			lj.Pg.SaveClassification(img.ImageId, class.ClassId,
-				class.ClassName, class.Probability)
+				class.ClassName, prob)
 		}
 	}
 }
